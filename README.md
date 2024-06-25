@@ -1,4 +1,4 @@
-# sudoku-vue
+# Sudoku
 
 ## Project setup
 ```
