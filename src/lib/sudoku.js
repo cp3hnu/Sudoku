@@ -5,7 +5,7 @@ import {
   CurrentGridIterator,
 } from "./iterator.js";
 import { difference } from "./set.js";
-import { sleep, arrayEquals } from "./utils.js";
+import { sleep, arrayEquals, LocationType } from "./utils.js";
 
 class Sudoku {
   constructor(numbers, callback = null, delay = 0) {
@@ -86,13 +86,13 @@ class Sudoku {
     for (const { row, column } of iterator) {
       const grid = this.gridFor(row, column);
       if (!grid.isSettled) {
-        await this.setItemNotes(row, column);
+        await this.setGridNotes(row, column);
       }
     }
   }
 
   // 通过关联位置的值，设置某个位置的候选值，如果候选值只有一个，则该位置的值是确定的
-  async setItemNotes(row, column) {
+  async setGridNotes(row, column) {
     const arr = [...Array(9)].fill(0);
     const iterator = new SudokuIterator(row, column);
     for (const { row: r, column: c } of iterator) {
@@ -110,7 +110,6 @@ class Sudoku {
       }
     });
     const grid = this.gridFor(row, column);
-    this.callback?.(row, column);
     if (notes.length === 1) {
       const settedValue = notes[0];
       await this.itemHaveSettled(row, column, settedValue);
@@ -122,7 +121,7 @@ class Sudoku {
 
   // 当一个位置确定了值，修改行、列、宫格其它位置的候选值
   async itemHaveSettled(row, column, number) {
-    this.callback?.(row, column);
+    this.callback?.(row, column, LocationType.Settle);
     await sleep(this.delay);
     const grid = this.gridFor(row, column);
     grid.value = number;
@@ -137,7 +136,7 @@ class Sudoku {
   async removeItemNotesValue(row, column, number) {
     const grid = this.gridFor(row, column);
     if (!grid.isSettled && grid.hasNotesValue(number)) {
-      this.callback?.(row, column);
+      this.callback?.(row, column, LocationType.Remove);
       await sleep(this.delay);
       grid.removeValueFromNotes(number);
       if (grid.notes.length === 1) {
@@ -156,7 +155,7 @@ class Sudoku {
     for (const { row, column } of iterator) {
       const grid = this.gridFor(row, column);
       if (!grid.isSettled) {
-        this.fixItemByDifference(row, column);
+        await this.fixItemByDifference(row, column);
       }
     }
   }

@@ -45,8 +45,8 @@ const isSetted = computed(() => {
 
 <style lang="scss" scoped>
 .grid {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   border: 0.5px solid #ccc;
   background-color: white;
   color: black;

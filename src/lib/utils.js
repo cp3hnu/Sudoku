@@ -32,3 +32,8 @@ export function getGridEndRowColumn(row, column) {
   const { startRow, startColumn } = getGridStartRowColumn(row, column);
   return { endRow: startRow + 2, endColumn: startColumn + 2 };
 }
+
+export const LocationType = Object.freeze({
+  Settle: "Settle",
+  Remove: "Remove",
+});

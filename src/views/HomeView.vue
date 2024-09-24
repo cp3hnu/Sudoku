@@ -8,8 +8,9 @@
       <div
         class="location"
         :style="{
-          top: location.line * 50 + 'px',
-          left: location.column * 50 + 'px',
+          top: location.line * 60 + 'px',
+          left: location.column * 60 + 'px',
+          borderColor: borderColor,
           visibility: isComputing ? 'visible' : 'hidden',
         }"
       ></div>
@@ -41,6 +42,7 @@
 import GridItem from "./components/GridItem.vue";
 import Sudoku from "@/lib/sudoku";
 import { reactive, ref } from "vue";
+import { LocationType } from "@/lib/utils"
 
 // const numbers = [
 //   [0, 9, 0, 3, 8, 5, 0, 6, 0],
@@ -74,7 +76,7 @@ const numbers = [
   [0, 0, 0, 3, 0, 4, 7, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 7, 0, 0, 0, 1, 0],
-  [0, 2, 0, 0, 5, 0, 6, 8, 0],
+  [0, 2, 0, 0, 5, 0, 0, 8, 0],
   [4, 0, 0, 0, 0, 0, 3, 0, 0],
 ];
 
@@ -96,12 +98,15 @@ const location = reactive({
   column: 0
 });
 
-const callback = (line, column) => {
+const borderColor = ref("transparent");
+
+const callback = (line, column, type) => {
   location.line = line;
   location.column = column;
+  borderColor.value = type === LocationType.Settle ? "green" : "red"
 }
 
-const itemList = new Sudoku(numbers, callback, 0);
+const itemList = new Sudoku(numbers, callback, 10);
 const listRef = reactive(itemList);
 const message = ref("");
 const isSuccess = ref(true)
@@ -137,8 +142,8 @@ const reset = () => {
 }
 
 .content {
-  width: 450px;
-  height: 450px;
+  width: 540px;
+  height: 540px;
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
@@ -180,7 +185,7 @@ const reset = () => {
   position: absolute;
   width: 50px;
   height: 50px;
-  border: 2px solid #40bd48;
+  border: 3px solid transparent;
   box-sizing: border-box;
 }
 </style>
