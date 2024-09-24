@@ -14,7 +14,7 @@
         }"
       ></div>
       <div
-        v-for="(arr, line) in listRef.list"
+        v-for="(arr, line) in listRef.gridView.grids"
         :key="`line-${line}`"
         class="content-line"
       >
@@ -39,7 +39,7 @@
 <script setup>
 /* eslint-disable */
 import GridItem from "./components/GridItem.vue";
-import ItemList from "@/lib/itemList";
+import Sudoku from "@/lib/sudoku";
 import { reactive, ref } from "vue";
 
 // const numbers = [
@@ -54,17 +54,30 @@ import { reactive, ref } from "vue";
 //   [0, 2, 0, 8, 5, 9, 0, 3, 0],
 // ];
 
+// const numbers = [
+//   [8, 1, 0, 5, 6, 0, 2, 0, 0],
+//   [0, 0, 0, 0, 7, 0, 0, 0, 3],
+//   [0, 0, 6, 0, 0, 0, 0, 0, 0],
+//   [9, 6, 0, 0, 5, 0, 0, 7, 0],
+//   [0, 0, 4, 0, 0, 0, 9, 0, 0],
+//   [0, 0, 2, 6, 0, 0, 0, 0, 0],
+//   [5, 9, 0, 1, 0, 0, 8, 0, 0],
+//   [0, 0, 0, 0, 0, 8, 0, 2, 0],
+//   [4, 0, 0, 0, 0, 0, 0, 0, 0],
+// ];
+
 const numbers = [
-  [8, 1, 0, 5, 6, 0, 2, 0, 0],
-  [0, 0, 0, 0, 7, 0, 0, 0, 3],
-  [0, 0, 6, 0, 0, 0, 0, 0, 0],
-  [9, 6, 0, 0, 5, 0, 0, 7, 0],
-  [0, 0, 4, 0, 0, 0, 9, 0, 0],
-  [0, 0, 2, 6, 0, 0, 0, 0, 0],
-  [5, 9, 0, 1, 0, 0, 8, 0, 0],
-  [0, 0, 0, 0, 0, 8, 0, 2, 0],
-  [4, 0, 0, 0, 0, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0, 0, 9, 0, 0],
+  [0, 0, 0, 0, 8, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 0, 0, 0, 0],
+  [0, 8, 5, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 3, 0, 4, 7, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 7, 0, 0, 0, 1, 0],
+  [0, 2, 0, 0, 5, 0, 6, 8, 0],
+  [4, 0, 0, 0, 0, 0, 3, 0, 0],
 ];
+
 
 // const numbers = [
 //   "630100000",
@@ -88,7 +101,7 @@ const callback = (line, column) => {
   location.column = column;
 }
 
-const itemList = new ItemList(numbers, callback, 10);
+const itemList = new Sudoku(numbers, callback, 0);
 const listRef = reactive(itemList);
 const message = ref("");
 const isSuccess = ref(true)
@@ -98,16 +111,12 @@ async function compute() {
   isComputing.value = true;
   await listRef.compute();
   isComputing.value = false;
-  if (listRef.validate()) {
+  if (listRef.isSuccess()) {
     message.value = "完成"
     isSuccess.value = true
   } else {
     message.value = "有错误"
     isSuccess.value = false
-    console.log(listRef.isCompleted());
-    console.log(listRef.validateLine());
-    console.log(listRef.validateColumn());
-    console.log(listRef.validateGrid());
   }
 }
 
