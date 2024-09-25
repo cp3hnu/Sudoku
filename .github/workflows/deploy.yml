@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # 当推送到 main 分支时触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16" # 你可以根据项目需要调整 Node.js 版本
+
+      - name: Install dependencies
+        run: yarn install # 如果使用的是其他包管理工具，调整命令
+
+      - name: Build the project
+        run: npm run build # 构建项目，确保构建输出到指定目录（如 ./build 或 ./dist）
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3 # 用于推送到 gh-pages 分支
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} # 内置 GitHub Token，用于授权操作
+          publish_branch: gh-pages # 部署的分支
+          publish_dir: ./build # 构建后的输出目录，根据项目调整（如 ./dist）
