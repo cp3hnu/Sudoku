@@ -36,6 +36,10 @@ class Sudoku {
     this.gridView = new GridView(this.numbers);
   }
 
+  setDelay(delay) {
+    this.delay = delay;
+  }
+
   reset() {
     this.gridView = new GridView(this.numbers);
   }

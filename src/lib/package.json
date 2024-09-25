@@ -1,0 +1,10 @@
+{
+  "name": "libtests",
+  "version": "1.0.0",
+  "description": "test",
+  "type": "module",
+  "main": "sudoku_test.js",
+  "scripts": {
+    "test": "node sudoku_test.js"
+  }
+}
