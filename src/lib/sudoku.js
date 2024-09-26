@@ -8,12 +8,13 @@ import { difference } from "./set.js";
 import { sleep, arrayEquals, OperationType } from "./utils.js";
 
 class Sudoku {
-  constructor(numbers, callback = null, delay = 0) {
+  constructor(numbers, signal, callback = null, delay = 0) {
     this.numbers = numbers;
     this.callback = callback;
     this.delay = delay;
     this.listStack = [];
     this.itemStack = [];
+    this.signal = signal;
     this.gridView = new GridView(this.numbers);
   }
 
@@ -126,6 +127,7 @@ class Sudoku {
   // 然后从同一行、列、宫格其它位置的候选值中删除该值
   async itemHaveSettled(row, column, number, opType) {
     this.callback?.(row, column, opType, number);
+    this.signal?.throwIfAborted();
     await sleep(this.delay);
     const grid = this.gridFor(row, column);
     grid.value = number;
@@ -141,6 +143,7 @@ class Sudoku {
     const grid = this.gridFor(row, column);
     if (!grid.isSettled && grid.hasNotesValue(number)) {
       this.callback?.(row, column, OperationType.Remove, number);
+      this.signal?.throwIfAborted();
       await sleep(this.delay);
       grid.removeValueFromNotes(number);
       if (grid.notes.length === 1) {

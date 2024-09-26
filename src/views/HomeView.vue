@@ -39,12 +39,12 @@
         ></div>
         <div
           v-for="(arr, line) in sudokuRef.gridView.grids"
-          :key="`line-${line}-${timestamp}`"
+          :key="`line-${line}`"
           class="content-line"
         >
           <GridItem
             v-for="(item, colomn) in arr"
-            :key="`grid-${line}-${colomn}-${timestamp}`"
+            :key="`grid-${line}-${colomn}`"
             :item="item"
             :line="line"
             :column="colomn"
@@ -141,11 +141,12 @@ const isComputing = ref(false);
 const borderColor = ref("transparent");
 const isEdit = ref(false);
 const delay = ref(1000);
-const timestamp = ref(Date.now());
 const location = reactive({
   line: 0,
   column: 0,
 });
+let abortCtrl = new AbortController();
+
 const cacheNumbers = localStorage.getItem("sudoku");
 if (cacheNumbers) {
   try {
@@ -154,7 +155,12 @@ if (cacheNumbers) {
     // ignore
   }
 }
-const sudoku = new Sudoku(numbers.value, moveFrame, delay.value);
+const sudoku = new Sudoku(
+  numbers.value,
+  abortCtrl.signal,
+  moveFrame,
+  delay.value
+);
 const sudokuRef = ref(sudoku);
 
 const onDelayInput = (event) => {
@@ -177,28 +183,43 @@ async function compute() {
   }
 
   if (sudokuRef.value.isSuccess()) {
-    message.value = "已成功";
+    message.value = "完成";
     messageColor.value = "green";
   }
 
   borderColor.value = "transparent";
+  message.value = "";
   isComputing.value = true;
-  await sudokuRef.value.compute();
-  isComputing.value = false;
-  if (sudokuRef.value.isSuccess()) {
-    message.value = "成功";
-    messageColor.value = "green";
-  } else {
-    message.value = "有错误";
+  try {
+    await sudokuRef.value.compute();
+    isComputing.value = false;
+    if (sudokuRef.value.isSuccess()) {
+      message.value = "完成";
+      messageColor.value = "green";
+    } else {
+      message.value = "有错误";
+      messageColor.value = "red";
+    }
+  } catch (error) {
+    isComputing.value = false;
+    console.log(error);
+    message.value = error.message;
     messageColor.value = "red";
   }
 }
 
 const reset = () => {
-  sudokuRef.value = new Sudoku(numbers.value, moveFrame, delay.value);
-  timestamp.value = Date.now();
-  //isComputing.value = false;
+  abortCtrl.abort(new Error("已取消"));
+  abortCtrl = new AbortController();
+  sudokuRef.value = new Sudoku(
+    numbers.value,
+    abortCtrl.signal,
+    moveFrame,
+    delay.value
+  );
+  isComputing.value = false;
   message.value = "";
+  messageColor.value = "black";
 };
 
 const onEdit = () => {
