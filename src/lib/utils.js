@@ -22,18 +22,23 @@ export const arrayEquals = (a, b) => {
   );
 };
 
+// 获取宫格的起始行列
 export function getGridStartRowColumn(row, column) {
   const startRow = Math.floor(row / 3) * 3;
   const startColumn = Math.floor(column / 3) * 3;
   return { startRow, startColumn };
 }
 
+// 获取宫格的结束行列
 export function getGridEndRowColumn(row, column) {
   const { startRow, startColumn } = getGridStartRowColumn(row, column);
   return { endRow: startRow + 2, endColumn: startColumn + 2 };
 }
 
-export const LocationType = Object.freeze({
-  Settle: "Settle",
-  Remove: "Remove",
+// 操作类型
+export const OperationType = Object.freeze({
+  Remove: "Remove", // 移除
+  LastPossible: "LastPossible", // 唯一候选数
+  HiddenSingles: "HiddenSingles", // 隐形单一数
+  Assumption: "Assumption", // 假定
 });

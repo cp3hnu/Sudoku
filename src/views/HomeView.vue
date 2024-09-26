@@ -13,13 +13,7 @@
         >
           计算
         </div>
-        <div
-          class="compute-button"
-          :class="{ 'compute-button--disabled': isComputing || isEdit }"
-          @click="reset"
-        >
-          重置
-        </div>
+        <div class="compute-button" @click="reset">重置</div>
       </template>
       <div
         class="compute-button"
@@ -45,12 +39,12 @@
         ></div>
         <div
           v-for="(arr, line) in sudokuRef.gridView.grids"
-          :key="`line-${line}`"
+          :key="`line-${line}-${timestamp}`"
           class="content-line"
         >
           <GridItem
             v-for="(item, colomn) in arr"
-            :key="`grid-${line}-${colomn}`"
+            :key="`grid-${line}-${colomn}-${timestamp}`"
             :item="item"
             :line="line"
             :column="colomn"
@@ -76,7 +70,9 @@
     </div>
     <div
       class="message"
-      :class="!hasError ? 'message--success' : 'message--error'"
+      :style="{
+        color: messageColor,
+      }"
     >
       {{ message }}
     </div>
@@ -88,7 +84,7 @@ import GridItem from "./components/GridItem.vue";
 import GridInput from "./components/GridInput.vue";
 import Sudoku from "@/lib/sudoku";
 import { reactive, ref } from "vue";
-import { LocationType } from "@/lib/utils";
+import { OperationType } from "@/lib/utils";
 import { validateGrid } from "@/utils/index.js";
 
 const numbers = ref([
@@ -103,31 +99,66 @@ const numbers = ref([
   [4, 0, 0, 0, 0, 0, 3, 0, 0],
 ]);
 
-const moveFrame = (line, column, type) => {
+const moveFrame = (line, column, opType, number) => {
   location.line = line;
   location.column = column;
-  borderColor.value = type === LocationType.Settle ? "green" : "red";
+  switch (opType) {
+    case OperationType.Remove:
+      borderColor.value = "red";
+      break;
+    case OperationType.Assumption:
+      borderColor.value = "orange";
+      break;
+    default:
+      borderColor.value = "green";
+      break;
+  }
+
+  switch (opType) {
+    case OperationType.LastPossible:
+      message.value = "唯一候选数：" + number;
+      break;
+    case OperationType.HiddenSingles:
+      message.value = "隐形单一数：" + number;
+      break;
+    case OperationType.Assumption:
+      message.value = "假定法：" + number;
+      break;
+    case OperationType.Remove:
+      message.value = "移除候选数：" + number;
+      break;
+  }
+  messageColor.value = "black";
 };
 
 const message = ref("");
-const hasError = ref(false);
+const messageColor = ref("black");
 const isComputing = ref(false);
 const borderColor = ref("transparent");
 const isEdit = ref(false);
-const delay = ref(10);
+const delay = ref(1000);
+const timestamp = ref(Date.now());
 const location = reactive({
   line: 0,
   column: 0,
 });
+const cacheNumbers = localStorage.getItem("sudoku");
+if (cacheNumbers) {
+  try {
+    numbers.value = JSON.parse(cacheNumbers);
+  } catch (error) {
+    // ignore
+  }
+}
 const sudoku = new Sudoku(numbers.value, moveFrame, delay.value);
-const sudokuRef = reactive(sudoku);
+const sudokuRef = ref(sudoku);
 
 const onDelayInput = (event) => {
   // 只保留数字
   event.target.value = event.target.value.replace(/\D/g, "");
   delay.value = event.target.value;
   const num = Number(event.target.value);
-  sudokuRef.delay = Number.isNaN(num) ? 10 : num;
+  sudokuRef.value.delay = Number.isNaN(num) ? 10 : num;
 };
 
 async function compute() {
@@ -135,37 +166,34 @@ async function compute() {
     return;
   }
 
-  if (!sudokuRef.isValidated()) {
+  if (!sudokuRef.value.isValidated()) {
     message.value = "输入错误，请重新输入";
-    hasError.value = true;
+    messageColor.value = "red";
     return;
   }
 
-  if (sudokuRef.isSuccess()) {
-    message.value = "成功";
-    hasError.value = false;
+  if (sudokuRef.value.isSuccess()) {
+    message.value = "已成功";
+    messageColor.value = "green";
   }
 
+  borderColor.value = "transparent";
   isComputing.value = true;
-  await sudokuRef.compute();
+  await sudokuRef.value.compute();
   isComputing.value = false;
-  if (sudokuRef.isSuccess()) {
+  if (sudokuRef.value.isSuccess()) {
     message.value = "成功";
-    hasError.value = false;
+    messageColor.value = "green";
   } else {
     message.value = "有错误";
-    hasError.value = true;
+    messageColor.value = "red";
   }
 }
 
 const reset = () => {
-  if (isComputing.value) {
-    return;
-  }
-
-  sudokuRef.reset();
-  isComputing.value = false;
-  hasError.value = false;
+  sudokuRef.value = new Sudoku(numbers.value, moveFrame, delay.value);
+  timestamp.value = Date.now();
+  //isComputing.value = false;
   message.value = "";
 };
 
@@ -191,19 +219,18 @@ const onEdit = () => {
     const msg = validateGrid(numbers.value);
     if (msg) {
       message.value = msg;
-      hasError.value = true;
+      messageColor.value = "red";
       isEdit.value = true;
     } else {
       message.value = "";
-      hasError.value = false;
-      sudokuRef.setNumbers(numbers.value);
+      sudokuRef.value.setNumbers(numbers.value);
+      localStorage.setItem("sudoku", JSON.stringify(numbers.value));
     }
   }
 };
 
 const onEditCancel = () => {
   message.value = "";
-  hasError.value = false;
   isEdit.value = false;
 };
 

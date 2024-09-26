@@ -1,5 +1,13 @@
 import { getGridStartRowColumn, getGridEndRowColumn } from "./utils.js";
+
+// 九宫格迭代器，当前格子的同一行、同一列、同一宫格
 export class SudokuIterator {
+  /**
+   * 九宫格迭代器
+   *
+   * @param {number} row - The row index.
+   * @param {number} column - The column index.
+   */
   constructor(row, column) {
     this.row = row;
     this.column = column;
@@ -25,7 +33,14 @@ export class SudokuIterator {
   }
 }
 
+// 行列迭代器，九宫格是 9 * 9
 export class RowColumnIterator {
+  /**
+   * 行列迭代器
+   *
+   * @param {number} lNumber - The number of lines.
+   * @param {number} cNumber - The number of columns.
+   */
   constructor(lNumber, cNumber) {
     this.lNumber = lNumber;
     this.cNumber = cNumber;
@@ -40,7 +55,13 @@ export class RowColumnIterator {
   }
 }
 
+// 宫格迭代器，9 个宫格
 export class IndexGridIterator {
+  /**
+   * 宫格迭代器
+   *
+   * @param {number} index - The index of the grid.
+   */
   constructor(index) {
     this.startRow = Math.floor(index / 3) * 3;
     this.startColumn = (index % 3) * 3;
@@ -57,7 +78,15 @@ export class IndexGridIterator {
   }
 }
 
+// 当前格子同一宫格迭代器
 export class CurrentGridIterator {
+  /**
+   * 当前格子同一宫格迭代器
+   *
+   * @param {number} curRow - The current row index.
+   * @param {number} curColumn - The current column index.
+   * @param {boolean} [afterCurrent=false] - Whether the iterator should start after the current cell. Default is false.
+   */
   constructor(curRow, curColumn, afterCurrent = false) {
     const { startRow, startColumn } = getGridStartRowColumn(curRow, curColumn);
     const { endRow, endColumn } = getGridEndRowColumn(curRow, curColumn);

@@ -115,6 +115,7 @@ export default class GridView {
     return true;
   }
 
+  // 是否行、列、宫格全部验证通过
   isValidated() {
     return (
       this.isRowValidated() &&
