@@ -11,7 +11,7 @@ export const validateGrid = (array) => {
     }
   }
 
-  if (count < 1) {
+  if (count < 17) {
     return "至少要确定17个数";
   }
 

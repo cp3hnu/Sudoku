@@ -3,8 +3,8 @@
     <div class="button-container">
       <template v-if="!isEdit">
         <div>
-          <label>延时(ms):</label>
-          <input :value="delay" @input="onDelayInput" />
+          <label for="delay">延时(ms):</label>
+          <input :value="delay" id="delay" @input="onDelayInput" />
         </div>
         <div
           class="compute-button"
@@ -23,6 +23,15 @@
         @click="onEdit"
       >
         {{ isEdit ? "确定" : "输入" }}
+      </div>
+      <div class="input-checkbox" v-if="!isEdit">
+        <input
+          id="last-input"
+          name="last-input"
+          type="checkbox"
+          v-model="inputWithLast"
+        />
+        <label for="last-input">带入上一次的值</label>
       </div>
       <div v-if="isEdit" class="compute-button" @click="onEditCancel">取消</div>
     </div>
@@ -53,7 +62,7 @@
       </template>
       <template v-else>
         <div
-          v-for="(arr, line) in numbers"
+          v-for="(arr, line) in inputNumbers"
           :key="`line-${line}`"
           class="content-line"
         >
@@ -86,18 +95,6 @@ import Sudoku from "@/lib/sudoku";
 import { reactive, ref } from "vue";
 import { OperationType } from "@/lib/utils";
 import { validateGrid } from "@/utils/index.js";
-
-const numbers = ref([
-  [3, 0, 0, 0, 0, 0, 9, 0, 0],
-  [0, 0, 0, 0, 8, 0, 0, 0, 0],
-  [0, 0, 0, 0, 1, 0, 0, 0, 0],
-  [0, 8, 5, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 3, 0, 4, 7, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 7, 0, 0, 0, 1, 0],
-  [0, 2, 0, 0, 5, 0, 0, 8, 0],
-  [4, 0, 0, 0, 0, 0, 3, 0, 0],
-]);
 
 const moveFrame = (line, column, opType, number) => {
   location.line = line;
@@ -135,12 +132,25 @@ const moveFrame = (line, column, opType, number) => {
   messageColor.value = "black";
 };
 
+let numbers = [
+  [3, 0, 0, 0, 0, 0, 9, 0, 0],
+  [0, 0, 0, 0, 8, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 0, 0, 0, 0],
+  [0, 8, 5, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 3, 0, 4, 7, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 7, 0, 0, 0, 1, 0],
+  [0, 2, 0, 0, 5, 0, 0, 8, 0],
+  [4, 0, 0, 0, 0, 0, 3, 0, 0],
+];
 const message = ref("");
 const messageColor = ref("black");
 const isComputing = ref(false);
 const borderColor = ref("transparent");
 const isEdit = ref(false);
 const delay = ref(1000);
+const inputWithLast = ref(false);
+const inputNumbers = ref([]);
 const location = reactive({
   line: 0,
   column: 0,
@@ -150,17 +160,12 @@ let abortCtrl = new AbortController();
 const cacheNumbers = localStorage.getItem("sudoku");
 if (cacheNumbers) {
   try {
-    numbers.value = JSON.parse(cacheNumbers);
+    numbers = JSON.parse(cacheNumbers);
   } catch (error) {
     // ignore
   }
 }
-const sudoku = new Sudoku(
-  numbers.value,
-  abortCtrl.signal,
-  moveFrame,
-  delay.value
-);
+const sudoku = new Sudoku(numbers, abortCtrl.signal, moveFrame, delay.value);
 const sudokuRef = ref(sudoku);
 
 const onDelayInput = (event) => {
@@ -212,7 +217,7 @@ const reset = () => {
   abortCtrl.abort(new Error("已取消"));
   abortCtrl = new AbortController();
   sudokuRef.value = new Sudoku(
-    numbers.value,
+    numbers,
     abortCtrl.signal,
     moveFrame,
     delay.value
@@ -229,27 +234,22 @@ const onEdit = () => {
 
   isEdit.value = !isEdit.value;
   if (isEdit.value) {
-    numbers.value = [
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ];
+    if (!inputWithLast.value) {
+      inputNumbers.value = [...Array(9)].map(() => [...Array(9)].fill(0));
+    } else {
+      inputNumbers.value = numbers.map((arr) => [...arr]);
+    }
   } else {
-    const msg = validateGrid(numbers.value);
+    const msg = validateGrid(inputNumbers.value);
     if (msg) {
       message.value = msg;
       messageColor.value = "red";
       isEdit.value = true;
     } else {
+      numbers = inputNumbers.value.map((arr) => [...arr]);
+      sudokuRef.value.setNumbers(numbers);
+      localStorage.setItem("sudoku", JSON.stringify(numbers));
       message.value = "";
-      sudokuRef.value.setNumbers(numbers.value);
-      localStorage.setItem("sudoku", JSON.stringify(numbers.value));
     }
   }
 };
@@ -264,7 +264,7 @@ function onChange(value, row, col) {
   if (Number.isNaN(num)) {
     num = 0;
   }
-  numbers.value[row][col] = num;
+  inputNumbers.value[row][col] = num;
 }
 </script>
 
@@ -300,10 +300,14 @@ function onChange(value, row, col) {
   gap: 20px;
   margin-bottom: 30px;
 
-  input {
+  #delay {
     width: 60px;
     height: 26px;
     margin-left: 4px;
+  }
+  #last-input {
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -328,12 +332,10 @@ function onChange(value, row, col) {
   height: 24px;
 }
 
-.message--success {
-  color: #40bd48;
-}
-
-.message--error {
-  color: #ff3e00;
+.input-checkbox {
+  display: flex;
+  align-items: center;
+  margin-left: -10px;
 }
 
 .location {
