@@ -1,34 +1,15 @@
 # Sudoku
 
-## Project setup
-```
-yarn install
-```
+推算九宫格数独
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
+##### 推算前
 
-### Compiles and minifies for production
-```
-yarn build
-```
+![](./screenshots/start.png)
 
-### Run your unit tests
-```
-yarn test:unit
-```
+##### 推算中
 
-### Run your end-to-end tests
-```
-yarn test:e2e
-```
+![](./screenshots/computing.png)
 
-### Lints and fixes files
-```
-yarn lint
-```
+##### 完成
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+![](./screenshots/done.png)
