@@ -107,6 +107,7 @@ const moveFrame = (line, column, opType, number) => {
       borderColor.value = "red";
       break;
     case OperationType.Assumption:
+    case OperationType.BackTrack:
       borderColor.value = "orange";
       break;
     default:
@@ -122,7 +123,10 @@ const moveFrame = (line, column, opType, number) => {
       message.value = "隐形单一数：" + number;
       break;
     case OperationType.Assumption:
-      message.value = "假定法：" + number;
+      message.value = "假定：" + number;
+      break;
+    case OperationType.BackTrack:
+      message.value = "回退假定：" + number;
       break;
     case OperationType.Remove:
       message.value = "移除候选数：" + number;

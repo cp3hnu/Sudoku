@@ -389,7 +389,7 @@ class Sudoku {
 
     this.gridView = new GridView(numbers);
     console.log("back-pick", row, column, value);
-    await this.itemHaveSettled(row, column, value, OperationType.Assumption);
+    await this.itemHaveSettled(row, column, value, OperationType.BackTrack);
     await this.assumptionPushOrPop();
   }
 

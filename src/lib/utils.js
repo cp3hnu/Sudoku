@@ -41,4 +41,5 @@ export const OperationType = Object.freeze({
   LastPossible: "LastPossible", // 唯一候选数
   HiddenSingles: "HiddenSingles", // 隐形单一数
   Assumption: "Assumption", // 假定
+  BackTrack: "BackTrack", // 回溯
 });
