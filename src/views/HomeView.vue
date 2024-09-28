@@ -1,89 +1,96 @@
 <template>
   <div class="container">
-    <div class="button-container">
-      <template v-if="!isEdit">
-        <div>
-          <label for="delay">延时(ms):</label>
-          <input :value="delay" id="delay" @input="onDelayInput" />
-        </div>
+    <div class="center">
+      <div class="button-container">
+        <template v-if="!isEdit">
+          <div
+            class="compute-button"
+            :class="{ 'compute-button--disabled': isComputing }"
+            @click="compute"
+          >
+            计算
+          </div>
+          <div class="compute-button" @click="reset">重置</div>
+        </template>
         <div
           class="compute-button"
-          :class="{ 'compute-button--disabled': isComputing }"
-          @click="compute"
+          :class="{
+            'compute-button--disabled': isComputing,
+          }"
+          @click="onEdit"
         >
-          计算
+          {{ isEdit ? "确定" : "输入" }}
         </div>
-        <div class="compute-button" @click="reset">重置</div>
-      </template>
-      <div
-        class="compute-button"
-        :class="{
-          'compute-button--disabled': isComputing,
-        }"
-        @click="onEdit"
-      >
-        {{ isEdit ? "确定" : "输入" }}
+        <div v-if="isEdit" class="compute-button" @click="onEditCancel">
+          取消
+        </div>
       </div>
-      <div class="input-checkbox" v-if="!isEdit">
+      <div class="content">
+        <template v-if="!isEdit">
+          <div
+            class="location"
+            :style="{
+              top: location.line * 60 + 'px',
+              left: location.column * 60 + 'px',
+              borderColor: borderColor,
+              visibility: isComputing ? 'visible' : 'hidden',
+            }"
+          ></div>
+          <div
+            v-for="(arr, line) in sudokuRef.gridView.grids"
+            :key="`line-${line}`"
+            class="content-line"
+          >
+            <GridItem
+              v-for="(item, colomn) in arr"
+              :key="`grid-${line}-${colomn}`"
+              :item="item"
+              :line="line"
+              :column="colomn"
+            />
+          </div>
+        </template>
+        <template v-else>
+          <div
+            v-for="(arr, line) in inputNumbers"
+            :key="`line-${line}`"
+            class="content-line"
+          >
+            <GridInput
+              v-for="(item, colomn) in arr"
+              :key="`grid-${line}-${colomn}`"
+              :value="item"
+              :line="line"
+              :column="colomn"
+              @change="onChange"
+            />
+          </div>
+        </template>
+      </div>
+      <div
+        class="message"
+        :style="{
+          color: messageColor,
+        }"
+      >
+        {{ message }}
+      </div>
+    </div>
+    <div class="setting" v-if="!isEdit">
+      <div class="title">配置:</div>
+      <div>
+        <label for="delay">延时(ms):</label>
+        <input :value="delay" id="delay" @input="onDelayInput" />
+      </div>
+      <div class="input-checkbox">
+        <label for="last-input">输入时带入上一次的值</label>
         <input
           id="last-input"
           name="last-input"
           type="checkbox"
           v-model="inputWithLast"
         />
-        <label for="last-input">带入上一次的值</label>
       </div>
-      <div v-if="isEdit" class="compute-button" @click="onEditCancel">取消</div>
-    </div>
-    <div class="content">
-      <template v-if="!isEdit">
-        <div
-          class="location"
-          :style="{
-            top: location.line * 60 + 'px',
-            left: location.column * 60 + 'px',
-            borderColor: borderColor,
-            visibility: isComputing ? 'visible' : 'hidden',
-          }"
-        ></div>
-        <div
-          v-for="(arr, line) in sudokuRef.gridView.grids"
-          :key="`line-${line}`"
-          class="content-line"
-        >
-          <GridItem
-            v-for="(item, colomn) in arr"
-            :key="`grid-${line}-${colomn}`"
-            :item="item"
-            :line="line"
-            :column="colomn"
-          />
-        </div>
-      </template>
-      <template v-else>
-        <div
-          v-for="(arr, line) in inputNumbers"
-          :key="`line-${line}`"
-          class="content-line"
-        >
-          <GridInput
-            v-for="(item, colomn) in arr"
-            :key="`grid-${line}-${colomn}`"
-            :value="item"
-            :line="line"
-            :column="colomn"
-            @change="onChange"
-          />
-        </div>
-      </template>
-    </div>
-    <div
-      class="message"
-      :style="{
-        color: messageColor,
-      }"
-    >
-      {{ message }}
     </div>
   </div>
 </template>
@@ -275,7 +282,42 @@ function onChange(value, row, col) {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  overflow-y: auto;
+  position: relative;
+}
+.center {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+.setting {
+  position: absolute;
+  right: 20px;
+  text-align: left;
+  width: 200px;
+
+  .title {
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  > div {
+    margin-bottom: 10px;
+  }
+
+  .input-checkbox {
+    display: flex;
+    align-items: center;
+  }
+
+  #delay {
+    width: 50px;
+    height: 26px;
+    margin-left: 10px;
+  }
+  #last-input {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .content {
@@ -297,18 +339,10 @@ function onChange(value, row, col) {
 .button-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 20px;
   margin-bottom: 30px;
-
-  #delay {
-    width: 60px;
-    height: 26px;
-    margin-left: 4px;
-  }
-  #last-input {
-    width: 20px;
-    height: 20px;
-  }
+  margin-top: 20px;
 }
 
 .compute-button {
@@ -330,12 +364,7 @@ function onChange(value, row, col) {
   font-size: 20px;
   margin-top: 20px;
   height: 24px;
-}
-
-.input-checkbox {
-  display: flex;
-  align-items: center;
-  margin-left: -10px;
+  flex: none;
 }
 
 .location {
