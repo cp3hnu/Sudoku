@@ -1,32 +1,59 @@
+# 构建并将其部署到 GitHub Pages
 name: Deploy to GitHub Pages
 
 on:
+  # 在针对 `main` 分支的推送上运行。如果你
+  # 使用 `master` 分支作为默认分支，请将其更改为 `master`
   push:
-    branches:
-      - main # 当推送到 main 分支时触发
+    branches: [main]
+
+  # 允许你从 Actions 选项卡手动运行此工作流程
+  workflow_dispatch:
+
+# 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 只允许同时进行一次部署，跳过正在运行和最新队列之间的运行队列
+# 但是，不要取消正在进行的运行，因为我们希望允许这些生产部署完成
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
+  # 构建工作
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "16" # 你可以根据项目需要调整 Node.js 版本
-
+          node-version: 20
+          cache: npm # 或 pnpm / yarn
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
       - name: Install dependencies
-        run: yarn install # 如果使用的是其他包管理工具，调整命令
-
-      - name: Build the project
-        run: npm run build # 构建项目，确保构建输出到指定目录（如 ./build 或 ./dist）
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4 # 用于推送到 gh-pages 分支
+        run: npm ci # 或 pnpm install / yarn install / bun install
+      - name: Build
+        run: npm run build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }} # 内置 GitHub Token，用于授权操作
-          publish_branch: gh-pages # 部署的分支
-          publish_dir: ./dist # 构建后的输出目录，根据项目调整（如 ./dist）
+          path: dist
+
+  # 部署工作
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    name: deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

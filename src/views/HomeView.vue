@@ -77,7 +77,7 @@
       </div>
     </div>
     <div class="setting" v-if="!isEdit">
-      <div class="title">配置:</div>
+      <div class="title">程序配置:</div>
       <div>
         <label for="delay">单步延时(ms):</label>
         <input :value="delay" id="delay" @input="onDelayInput" />
