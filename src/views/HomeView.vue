@@ -4,26 +4,36 @@
       <div class="button-container">
         <template v-if="!isEdit">
           <div
-            class="compute-button"
-            :class="{ 'compute-button--disabled': isComputing }"
+            class="button button--primary"
+            :class="{ 'button--disabled': isComputing }"
             @click="compute"
           >
             计算
           </div>
-          <div class="compute-button" @click="reset">重置</div>
+          <div class="button button--stop" @click="reset">重置</div>
+          <div
+            class="button button--input"
+            :class="{
+              'button--disabled': isComputing,
+            }"
+            @click="onInput"
+          >
+            输入
+          </div>
+          <div
+            class="button button--edit"
+            :class="{
+              'button--disabled': isComputing,
+            }"
+            @click="onEdit"
+          >
+            修改
+          </div>
         </template>
-        <div
-          class="compute-button"
-          :class="{
-            'compute-button--disabled': isComputing,
-          }"
-          @click="onEdit"
-        >
-          {{ isEdit ? "确定" : "输入" }}
-        </div>
-        <div v-if="isEdit" class="compute-button" @click="onEditCancel">
-          取消
-        </div>
+        <template v-else>
+          <div class="button button--primary" @click="onEditConfirm">确定</div>
+          <div class="button" @click="onEditCancel">取消</div>
+        </template>
       </div>
       <div class="content">
         <template v-if="!isEdit">
@@ -59,6 +69,7 @@
             <GridInput
               v-for="(item, colomn) in arr"
               :key="`grid-${line}-${colomn}`"
+              :id="`grid-${line}-${colomn}`"
               :value="item"
               :line="line"
               :column="colomn"
@@ -81,15 +92,6 @@
       <div>
         <label for="delay">单步延时(ms):</label>
         <input :value="delay" id="delay" @input="onDelayInput" />
-      </div>
-      <div class="input-checkbox">
-        <label for="last-input">输入时带入上一次的值</label>
-        <input
-          id="last-input"
-          name="last-input"
-          type="checkbox"
-          v-model="inputWithLast"
-        />
       </div>
     </div>
   </div>
@@ -155,8 +157,7 @@ const messageColor = ref("black");
 const isComputing = ref(false);
 const borderColor = ref("transparent");
 const isEdit = ref(false);
-const delay = ref(1000);
-const inputWithLast = ref(false);
+const delay = ref(1);
 const inputNumbers = ref([]);
 const location = reactive({
   line: 0,
@@ -215,7 +216,11 @@ async function compute() {
   } catch (error) {
     isComputing.value = false;
     console.log(error);
-    message.value = error.message;
+    if (error.message.includes("已取消")) {
+      message.value = "已取消";
+    } else {
+      message.value = error.message;
+    }
     messageColor.value = "red";
   }
 }
@@ -234,30 +239,36 @@ const reset = () => {
   messageColor.value = "black";
 };
 
+const onInput = () => {
+  if (isComputing.value) {
+    return;
+  }
+
+  isEdit.value = true;
+  inputNumbers.value = [...Array(9)].map(() => [...Array(9)].fill(0));
+};
+
 const onEdit = () => {
   if (isComputing.value) {
     return;
   }
 
-  isEdit.value = !isEdit.value;
-  if (isEdit.value) {
-    if (!inputWithLast.value) {
-      inputNumbers.value = [...Array(9)].map(() => [...Array(9)].fill(0));
-    } else {
-      inputNumbers.value = numbers.map((arr) => [...arr]);
-    }
+  isEdit.value = true;
+  inputNumbers.value = numbers.map((arr) => [...arr]);
+};
+
+const onEditConfirm = () => {
+  isEdit.value = false;
+  const msg = validateGrid(inputNumbers.value);
+  if (msg) {
+    message.value = msg;
+    messageColor.value = "red";
+    isEdit.value = true;
   } else {
-    const msg = validateGrid(inputNumbers.value);
-    if (msg) {
-      message.value = msg;
-      messageColor.value = "red";
-      isEdit.value = true;
-    } else {
-      numbers = inputNumbers.value.map((arr) => [...arr]);
-      sudokuRef.value.setNumbers(numbers);
-      localStorage.setItem("sudoku", JSON.stringify(numbers));
-      message.value = "";
-    }
+    numbers = inputNumbers.value.map((arr) => [...arr]);
+    sudokuRef.value.setNumbers(numbers);
+    localStorage.setItem("sudoku", JSON.stringify(numbers));
+    message.value = "";
   }
 };
 
@@ -345,19 +356,74 @@ function onChange(value, row, col) {
   margin-top: 20px;
 }
 
-.compute-button {
+.button {
   padding: 8px 0;
   font-size: 16px;
-  background-color: #1377eb;
-  color: white;
+  color: black;
+  border: 1px solid #8e8e8e;
   border-radius: 8px;
   width: 100px;
   cursor: pointer;
 
-  &--disabled {
-    background-color: lightgray;
-    cursor: not-allowed;
+  &:hover {
+    border: 1px solid #1377eb;
+    color: #1377eb;
   }
+
+  &--primary {
+    background-color: #1377eb;
+    color: white;
+    border: none;
+
+    &:hover {
+      background-color: #1377ebcc;
+      color: white;
+      border: none;
+    }
+  }
+
+  &--stop {
+    background-color: #eb1e13;
+    color: white;
+    border: none;
+
+    &:hover {
+      background-color: #eb1e13cc;
+      color: white;
+      border: none;
+    }
+  }
+
+  &--input {
+    background-color: rgb(255, 120, 0);
+    color: white;
+    border: none;
+
+    &:hover {
+      background-color: rgba(255, 120, 0, 0.8);
+      color: white;
+      border: none;
+    }
+  }
+
+  &--edit {
+    background-color: #dd13eb;
+    color: white;
+    border: none;
+
+    &:hover {
+      background-color: #dd13ebcc;
+      color: white;
+      border: none;
+    }
+  }
+}
+
+.button.button--disabled {
+  background-color: lightgray;
+  color: #999999;
+  cursor: not-allowed;
+  border: none;
 }
 
 .message {

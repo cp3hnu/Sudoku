@@ -56,9 +56,11 @@ class Sudoku {
     if (this.isCompleted()) {
       return;
     }
+
     await this.lastPossibleNumber();
     let preCount = 0;
     let nextCount = this.gridView.unsettledItemCount();
+
     while (!this.isCompleted() && preCount !== nextCount) {
       preCount = nextCount;
       await this.hiddenSingles();
@@ -67,13 +69,16 @@ class Sudoku {
 
     preCount = 0;
     nextCount = this.gridView.notesTotal();
+
     while (!this.isCompleted() && preCount !== nextCount) {
       preCount = nextCount;
       await this.obviousPairs();
       nextCount = this.gridView.notesTotal();
     }
 
-    await this.assumption();
+    if (!this.isCompleted()) {
+      await this.assumption();
+    }
   }
 
   // ------------------------------------------------- 分割线 -------------------------------------------------
